@@ -10,17 +10,25 @@ import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.impute import SimpleImputer
+from sklearn.metrics import roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.common.data_loader import load_dataset
 from src.common.evaluation import evaluate_classification, save_metrics_json
+from src.common.visualization import (
+    plot_confusion_matrix,
+    plot_feature_importances,
+    plot_model_comparison,
+    plot_roc_curves,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -132,6 +140,21 @@ def build_churn_pipeline(classifier: Any) -> Pipeline:
     )
 
 
+def extract_transformed_feature_names(preprocessor: ColumnTransformer) -> List[str]:
+    """Extract ordered feature names produced by fitted ColumnTransformer."""
+    names = []
+    # Numeric
+    names.extend(NUMERICAL_COLS)
+    # Categorical OneHot names
+    try:
+        cat_encoder = preprocessor.named_transformers_["cat"].named_steps["encoder"]
+        cat_features = cat_encoder.get_feature_names_out(CATEGORICAL_COLS)
+        names.extend(list(cat_features))
+    except Exception as e:
+        logger.warning(f"Could not extract one-hot feature names: {e}")
+    return names
+
+
 def train_and_evaluate_churn_models(
     X_train: pd.DataFrame,
     y_train: pd.Series,
@@ -139,7 +162,6 @@ def train_and_evaluate_churn_models(
     y_test: pd.Series,
 ) -> Tuple[Dict[str, Pipeline], Dict[str, Dict[str, Any]], Dict[str, np.ndarray]]:
     """Train Random Forest and XGBoost with class imbalance mitigation and evaluate test performance."""
-    # Compute imbalance ratio for XGBoost scale_pos_weight
     n_neg = int(np.sum(y_train == 0))
     n_pos = int(np.sum(y_train == 1))
     scale_pos_weight = float(n_neg / max(n_pos, 1))
@@ -147,7 +169,6 @@ def train_and_evaluate_churn_models(
         f"Training set imbalance ratio: {n_neg} negative vs {n_pos} positive (scale_pos_weight={scale_pos_weight:.2f})"
     )
 
-    # 1. Random Forest with balanced class weighting
     rf_clf = RandomForestClassifier(
         n_estimators=150,
         max_depth=8,
@@ -158,7 +179,6 @@ def train_and_evaluate_churn_models(
     )
     rf_pipe = build_churn_pipeline(rf_clf)
 
-    # 2. XGBoost with scale_pos_weight or documented fallback
     try:
         from xgboost import XGBClassifier
 
@@ -223,11 +243,7 @@ def predict_churn(
     customer_data: Dict[str, Any],
     threshold: float = 0.5,
 ) -> Dict[str, Any]:
-    """Predict customer churn with customizable decision threshold.
-
-    Allows adjusting decision threshold to manage precision-recall tradeoffs
-    in customer retention interventions.
-    """
+    """Predict customer churn with customizable decision threshold."""
     df_single = pd.DataFrame([customer_data])
     prob_churn = float(pipeline.predict_proba(df_single)[0, 1])
     predicted_class = int(prob_churn >= threshold)
@@ -243,4 +259,106 @@ def predict_churn(
             if predicted_class == 1
             else "Low churn risk: maintain standard service."
         ),
+    }
+
+
+def run_task3_pipeline(output_dir: str = "reports/task3") -> Dict[str, Any]:
+    """Execute complete Task 3 pipeline, generate ROC curves, feature importances, and save metrics."""
+    os.makedirs(output_dir, exist_ok=True)
+    X_train, X_test, y_train, y_test, df_clean = prepare_churn_data()
+
+    models, results, probabilities = train_and_evaluate_churn_models(
+        X_train, y_train, X_test, y_test
+    )
+
+    y_test_arr = y_test.to_numpy()
+
+    # 1. ROC Curves
+    curves = {}
+    for name, probs in probabilities.items():
+        fpr, tpr, _ = roc_curve(y_test_arr, probs)
+        auc_score = results[name]["roc_auc"]
+        curves[name.replace("_", " ").title()] = (fpr, tpr, auc_score)
+
+    roc_path = os.path.join(output_dir, "roc_curves.png")
+    plot_roc_curves(curves, title="IBM Telco Churn: Receiver Operating Characteristic", save_path=roc_path)
+    plt.close("all")
+
+    # 2. Confusion Matrices
+    for name, metrics in results.items():
+        cm_path = os.path.join(output_dir, f"confusion_matrix_{name}.png")
+        plot_confusion_matrix(
+            cm=metrics["confusion_matrix"],
+            class_names=["Retain", "Churn"],
+            title=f"Confusion Matrix: {name.replace('_', ' ').title()}",
+            save_path=cm_path,
+        )
+        plt.close("all")
+
+    # 3. Feature Importances
+    for name, pipe in models.items():
+        preprocessor = pipe.named_steps["preprocessor"]
+        clf = pipe.named_steps["classifier"]
+        feature_names = extract_transformed_feature_names(preprocessor)
+
+        if hasattr(clf, "feature_importances_") and len(feature_names) == len(
+            clf.feature_importances_
+        ):
+            fi_path = os.path.join(output_dir, f"feature_importances_{name}.png")
+            plot_feature_importances(
+                features=feature_names,
+                importances=clf.feature_importances_,
+                top_n=10,
+                title=f"Top 10 Churn Predictors: {name.replace('_', ' ').title()}",
+                save_path=fi_path,
+            )
+            plt.close("all")
+
+    # 4. Model Comparison Bar Chart
+    comp_path = os.path.join(output_dir, "model_comparison.png")
+    plot_model_comparison(
+        models_dict={
+            "Random Forest (AUC)": results["random_forest"]["roc_auc"],
+            "XGBoost (AUC)": list(results.values())[1]["roc_auc"],
+        },
+        metric_name="ROC-AUC Score",
+        title="IBM Telco Churn: Discrimination Quality (ROC-AUC)",
+        save_path=comp_path,
+    )
+    plt.close("all")
+
+    # 5. Save metrics.json
+    save_metrics_json(results, os.path.join(output_dir, "metrics.json"))
+
+    # 6. Sample inference test
+    sample_customer = {
+        "gender": "Female",
+        "SeniorCitizen": 0,
+        "Partner": "No",
+        "Dependents": "No",
+        "tenure": 2,
+        "PhoneService": "Yes",
+        "MultipleLines": "No",
+        "InternetService": "Fiber optic",
+        "OnlineSecurity": "No",
+        "OnlineBackup": "No",
+        "DeviceProtection": "No",
+        "TechSupport": "No",
+        "StreamingTV": "Yes",
+        "StreamingMovies": "Yes",
+        "Contract": "Month-to-month",
+        "PaperlessBilling": "Yes",
+        "PaymentMethod": "Electronic check",
+        "MonthlyCharges": 89.15,
+        "TotalCharges": 178.30,
+    }
+    pred_res = predict_churn(models["random_forest"], sample_customer, threshold=0.4)
+    logger.info(
+        f"Sample prediction for Month-to-month customer: Prob={pred_res['churn_probability']:.2%}, Decision={pred_res['predicted_label']}"
+    )
+
+    return {
+        "models": models,
+        "results": results,
+        "output_dir": output_dir,
     }
