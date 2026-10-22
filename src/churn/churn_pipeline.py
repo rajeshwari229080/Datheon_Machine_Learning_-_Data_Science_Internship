@@ -75,8 +75,10 @@ def clean_churn_dataset(df_raw: pd.DataFrame) -> pd.DataFrame:
             f"Safely coerced TotalCharges to numeric: detected {nan_count} blank/null values to be imputed."
         )
 
-    if df[TARGET_COL].dtype == object:
-        df[TARGET_COL] = df[TARGET_COL].map({"Yes": 1, "No": 0}).astype(np.int64)
+    # Encode binary target if not already numeric
+    if not pd.api.types.is_numeric_dtype(df[TARGET_COL]):
+        df[TARGET_COL] = df[TARGET_COL].astype(str).str.strip().map({"Yes": 1, "No": 0}).astype(np.int64)
+
 
     return df
 
