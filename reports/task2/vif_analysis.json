@@ -1,0 +1,34 @@
+[
+  {
+    "feature":"total_bedrooms",
+    "vif":36.0037259649
+  },
+  {
+    "feature":"households",
+    "vif":35.1360448214
+  },
+  {
+    "feature":"total_rooms",
+    "vif":12.7169997816
+  },
+  {
+    "feature":"latitude",
+    "vif":8.8289191494
+  },
+  {
+    "feature":"longitude",
+    "vif":8.7137403359
+  },
+  {
+    "feature":"population",
+    "vif":6.3712381262
+  },
+  {
+    "feature":"median_income",
+    "vif":1.7315109244
+  },
+  {
+    "feature":"housing_median_age",
+    "vif":1.2600149683
+  }
+]
