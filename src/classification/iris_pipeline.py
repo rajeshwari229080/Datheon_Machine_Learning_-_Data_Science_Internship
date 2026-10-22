@@ -122,6 +122,100 @@ def train_and_evaluate_models(
     return models, results
 
 
+def plot_two_feature_decision_boundary(
+    X: np.ndarray,
+    y: np.ndarray,
+    model_type: str = "logistic_regression",
+    feature_indices: Tuple[int, int] = (0, 2),
+    save_path: Optional[str] = None,
+) -> plt.Figure:
+    """Train a legitimate 2-feature model and visualize its 2D decision boundary.
+
+    Limitation Note: This boundary is trained and plotted strictly in the 2D subspace of
+    (feature_indices[0], feature_indices[1]). It demonstrates the model's geometric decision
+    regions in 2D and is NOT a projection of the full 4D decision hyperspace.
+    """
+    f1_idx, f2_idx = feature_indices
+    f1_name = FEATURE_NAMES[f1_idx]
+    f2_name = FEATURE_NAMES[f2_idx]
+
+    X_2d = X[:, [f1_idx, f2_idx]]
+
+    # Train dedicated 2D model
+    if model_type == "logistic_regression":
+        model_2d = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("clf", LogisticRegression(random_state=42, max_iter=1000)),
+            ]
+        )
+        display_name = "Logistic Regression"
+    else:
+        model_2d = DecisionTreeClassifier(random_state=42, max_depth=4)
+        display_name = "Decision Tree"
+
+    model_2d.fit(X_2d, y)
+
+    # Generate dense 2D meshgrid
+    x_min, x_max = X_2d[:, 0].min() - 0.5, X_2d[:, 0].max() + 0.5
+    y_min, y_max = X_2d[:, 1].min() - 0.5, X_2d[:, 1].max() + 0.5
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 300), np.linspace(y_min, y_max, 300))
+    grid_points = np.c_[xx.ravel(), yy.ravel()]
+    Z = model_2d.predict(grid_points)
+    Z = Z.reshape(xx.shape)
+
+    fig, ax = plt.subplots(figsize=(7.5, 6))
+
+    # Decision regions
+    ax.contourf(xx, yy, Z, alpha=0.25, cmap="viridis", levels=[-0.5, 0.5, 1.5, 2.5])
+    ax.contour(xx, yy, Z, colors="#1F2937", linewidths=0.8, alpha=0.5, levels=[0.5, 1.5])
+
+    # Scatter actual observations
+    colors = ["#4338CA", "#059669", "#D97706"]
+    markers = ["o", "s", "^"]
+    for idx, cname in enumerate(CLASS_NAMES):
+        mask = y == idx
+        ax.scatter(
+            X_2d[mask, 0],
+            X_2d[mask, 1],
+            c=colors[idx],
+            marker=markers[idx],
+            edgecolor="#111827",
+            linewidth=0.7,
+            s=55,
+            label=f"{cname.capitalize()} (Actual)",
+        )
+
+    ax.set_title(
+        f"{display_name}: 2-Feature Decision Surface\n"
+        f"Features: {f1_name.replace('_', ' ').title()} vs {f2_name.replace('_', ' ').title()}",
+        pad=12,
+        weight="bold",
+        color="#111827",
+    )
+    ax.set_xlabel(f"{f1_name.replace('_', ' ').title()} (cm)", labelpad=8)
+    ax.set_ylabel(f"{f2_name.replace('_', ' ').title()} (cm)", labelpad=8)
+    ax.legend(loc="upper left", frameon=True, facecolor="#F9FAFB")
+
+    # Explanatory limitation footnote
+    fig.text(
+        0.5,
+        -0.02,
+        "Limitation: Decision surface is produced by a legitimate 2-feature model for geometric visualization.\n"
+        "It does not represent the full 4-dimensional hyper-surface of the production 4-feature classifier.",
+        ha="center",
+        fontsize=8,
+        color="#6B7280",
+        style="italic",
+    )
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path, bbox_inches="tight")
+    return fig
+
+
 def predict_species(
     model: Pipeline,
     features: Union[List[float], Tuple[float, float, float, float], Dict[str, float]],
@@ -155,4 +249,63 @@ def predict_species(
         "predicted_class_index": pred_idx,
         "predicted_species": species_name,
         "probabilities": probs,
+    }
+
+
+def run_task1_pipeline(output_dir: str = "reports/task1") -> Dict[str, Any]:
+    """Execute complete Task 1 pipeline, generate figures, and export metrics.json."""
+    os.makedirs(output_dir, exist_ok=True)
+    X_train, X_test, y_train, y_test, df = prepare_iris_data()
+
+    models, results = train_and_evaluate_models(X_train, X_test, y_train, y_test)
+
+    # 1. Confusion Matrix Plots
+    for name, metrics in results.items():
+        cm_path = os.path.join(output_dir, f"confusion_matrix_{name}.png")
+        plot_confusion_matrix(
+            cm=metrics["confusion_matrix"],
+            class_names=CLASS_NAMES,
+            title=f"Iris Confusion Matrix: {name.replace('_', ' ').title()}",
+            save_path=cm_path,
+        )
+        plt.close("all")
+
+    # 2. Model Comparison Bar Chart
+    comp_path = os.path.join(output_dir, "model_comparison.png")
+    plot_model_comparison(
+        models_dict={
+            "Logistic Regression": results["logistic_regression"]["accuracy"],
+            "Decision Tree": results["decision_tree"]["accuracy"],
+        },
+        metric_name="Accuracy",
+        title="Model Accuracy Comparison: Iris Multi-Class Benchmark",
+        save_path=comp_path,
+    )
+    plt.close("all")
+
+    # 3. 2-Feature Decision Boundaries
+    for mtype in ["logistic_regression", "decision_tree"]:
+        bd_path = os.path.join(output_dir, f"decision_boundary_{mtype}.png")
+        plot_two_feature_decision_boundary(
+            X=X_train,
+            y=y_train,
+            model_type=mtype,
+            feature_indices=(0, 2),  # sepal_length vs petal_length
+            save_path=bd_path,
+        )
+        plt.close("all")
+
+    # 4. Save metrics.json
+    metrics_path = os.path.join(output_dir, "metrics.json")
+    save_metrics_json(results, metrics_path)
+
+    # 5. Prediction verification
+    sample_feat = [5.1, 3.5, 1.4, 0.2]
+    pred_res = predict_species(models["logistic_regression"], sample_feat)
+    logger.info(f"Sample prediction for {sample_feat}: {pred_res['predicted_species']}")
+
+    return {
+        "models": models,
+        "results": results,
+        "output_dir": output_dir,
     }
