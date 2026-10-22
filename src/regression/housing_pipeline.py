@@ -14,11 +14,13 @@ import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.model_selection import train_test_split
+from sklearn.linear_model import Lasso, LinearRegression, Ridge
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.common.data_loader import load_dataset
+from src.common.evaluation import evaluate_regression, save_metrics_json
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +47,6 @@ ALL_NUMERIC_COLS: List[str] = RAW_NUMERIC_COLS + ENGINEERED_COLS
 def add_interaction_features(df: pd.DataFrame) -> pd.DataFrame:
     """Engineer meaningful domain ratio interactions from raw housing attributes."""
     df_feat = df.copy()
-    # Avoid zero division with safe epsilon
     df_feat["rooms_per_household"] = df_feat["total_rooms"] / np.maximum(df_feat["households"], 1)
     df_feat["bedrooms_per_room"] = df_feat["total_bedrooms"] / np.maximum(df_feat["total_rooms"], 1)
     df_feat["population_per_household"] = df_feat["population"] / np.maximum(df_feat["households"], 1)
@@ -77,11 +78,7 @@ def prepare_housing_data(
 
 
 def build_preprocessor() -> ColumnTransformer:
-    """Construct Scikit-learn ColumnTransformer for numeric and categorical pipelines.
-
-    Numeric: SimpleImputer(median) -> StandardScaler()
-    Categorical: OneHotEncoder(handle_unknown='ignore')
-    """
+    """Construct Scikit-learn ColumnTransformer for numeric and categorical pipelines."""
     numeric_pipe = Pipeline(
         [
             ("imputer", SimpleImputer(strategy="median")),
@@ -106,3 +103,105 @@ def build_preprocessor() -> ColumnTransformer:
         remainder="drop",
     )
     return preprocessor
+
+
+def build_regression_pipeline(estimator: Any) -> Pipeline:
+    """Wrap preprocessor and estimator into a unified Scikit-learn Pipeline."""
+    return Pipeline(
+        [
+            ("preprocessor", build_preprocessor()),
+            ("regressor", estimator),
+        ]
+    )
+
+
+def train_and_tune_models(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_test: pd.DataFrame,
+    y_test: pd.Series,
+    cv: int = 5,
+) -> Tuple[Dict[str, Pipeline], Dict[str, Dict[str, Any]], Dict[str, np.ndarray]]:
+    """Train OLS baseline and perform 5-fold cross-validation tuning for Ridge and Lasso."""
+    preprocessor = build_preprocessor()
+
+    # 1. Baseline Ordinary Least Squares
+    ols_pipe = build_regression_pipeline(LinearRegression())
+    logger.info("Fitting OLS Linear Regression baseline...")
+    ols_pipe.fit(X_train, y_train)
+
+    # 2. Ridge Regression with GridSearchCV on training set
+    ridge_pipe = build_regression_pipeline(Ridge(random_state=42))
+    ridge_params = {"regressor__alpha": [0.1, 1.0, 10.0, 50.0, 100.0, 200.0]}
+    logger.info("Tuning Ridge regularization strength with 5-fold CV...")
+    ridge_cv = GridSearchCV(
+        ridge_pipe,
+        param_grid=ridge_params,
+        cv=cv,
+        scoring="neg_root_mean_squared_error",
+        n_jobs=-1,
+    )
+    ridge_cv.fit(X_train, y_train)
+    best_ridge = ridge_cv.best_estimator_
+
+    # 3. Lasso Regression with GridSearchCV on training set
+    lasso_pipe = build_regression_pipeline(Lasso(random_state=42, max_iter=2000))
+    lasso_params = {"regressor__alpha": [1.0, 10.0, 50.0, 100.0, 250.0]}
+    logger.info("Tuning Lasso regularization strength with 5-fold CV...")
+    lasso_cv = GridSearchCV(
+        lasso_pipe,
+        param_grid=lasso_params,
+        cv=cv,
+        scoring="neg_root_mean_squared_error",
+        n_jobs=-1,
+    )
+    lasso_cv.fit(X_train, y_train)
+    best_lasso = lasso_cv.best_estimator_
+
+    models: Dict[str, Pipeline] = {
+        "ols_linear_regression": ols_pipe,
+        "ridge_regression": best_ridge,
+        "lasso_regression": best_lasso,
+    }
+
+    results: Dict[str, Dict[str, Any]] = {}
+    predictions: Dict[str, np.ndarray] = {}
+
+    y_test_arr = y_test.to_numpy()
+
+    for name, pipe in models.items():
+        y_pred = pipe.predict(X_test)
+        predictions[name] = y_pred
+
+        metrics = evaluate_regression(y_test_arr, y_pred)
+
+        # Attach best CV parameters if tuned
+        if name == "ridge_regression":
+            metrics["best_alpha"] = float(ridge_cv.best_params_["regressor__alpha"])
+            metrics["best_cv_rmse"] = float(-ridge_cv.best_score_)
+        elif name == "lasso_regression":
+            metrics["best_alpha"] = float(lasso_cv.best_params_["regressor__alpha"])
+            metrics["best_cv_rmse"] = float(-lasso_cv.best_score_)
+
+        results[name] = metrics
+        logger.info(
+            f"{name} -> Test RMSE: ${metrics['rmse']:,.2f}, MAE: ${metrics['mae']:,.2f}, R²: {metrics['r2']:.4f}"
+        )
+
+    return models, results, predictions
+
+
+def predict_house_value(pipeline: Pipeline, house_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Predict median house value in USD from dictionary of input features.
+
+    Applies interaction feature engineering and the complete fitted ColumnTransformer pipeline.
+    """
+    df_single = pd.DataFrame([house_data])
+    df_engineered = add_interaction_features(df_single)
+
+    pred_val = float(pipeline.predict(df_engineered)[0])
+    return {
+        "predicted_median_house_value_usd": round(pred_val, 2),
+        "predicted_value_formatted": f"${pred_val:,.2f}",
+        "input_features": house_data,
+    }
