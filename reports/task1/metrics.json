@@ -1,0 +1,124 @@
+{
+  "logistic_regression": {
+    "accuracy": 0.9333333333333333,
+    "macro_precision": 0.9333333333333332,
+    "macro_recall": 0.9333333333333332,
+    "macro_f1": 0.9333333333333332,
+    "weighted_precision": 0.9333333333333333,
+    "weighted_recall": 0.9333333333333333,
+    "weighted_f1": 0.9333333333333333,
+    "confusion_matrix": [
+      [
+        10,
+        0,
+        0
+      ],
+      [
+        0,
+        9,
+        1
+      ],
+      [
+        0,
+        1,
+        9
+      ]
+    ],
+    "classification_report": {
+      "setosa": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 10.0
+      },
+      "versicolor": {
+        "precision": 0.9,
+        "recall": 0.9,
+        "f1-score": 0.9,
+        "support": 10.0
+      },
+      "virginica": {
+        "precision": 0.9,
+        "recall": 0.9,
+        "f1-score": 0.9,
+        "support": 10.0
+      },
+      "accuracy": 0.9333333333333333,
+      "macro avg": {
+        "precision": 0.9333333333333332,
+        "recall": 0.9333333333333332,
+        "f1-score": 0.9333333333333332,
+        "support": 30.0
+      },
+      "weighted avg": {
+        "precision": 0.9333333333333333,
+        "recall": 0.9333333333333333,
+        "f1-score": 0.9333333333333333,
+        "support": 30.0
+      }
+    },
+    "report_text": "              precision    recall  f1-score   support\n\n      setosa       1.00      1.00      1.00        10\n  versicolor       0.90      0.90      0.90        10\n   virginica       0.90      0.90      0.90        10\n\n    accuracy                           0.93        30\n   macro avg       0.93      0.93      0.93        30\nweighted avg       0.93      0.93      0.93        30\n",
+    "roc_auc_ovr": 0.9966666666666667
+  },
+  "decision_tree": {
+    "accuracy": 0.9333333333333333,
+    "macro_precision": 0.9333333333333332,
+    "macro_recall": 0.9333333333333332,
+    "macro_f1": 0.9333333333333332,
+    "weighted_precision": 0.9333333333333333,
+    "weighted_recall": 0.9333333333333333,
+    "weighted_f1": 0.9333333333333333,
+    "confusion_matrix": [
+      [
+        10,
+        0,
+        0
+      ],
+      [
+        0,
+        9,
+        1
+      ],
+      [
+        0,
+        1,
+        9
+      ]
+    ],
+    "classification_report": {
+      "setosa": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 10.0
+      },
+      "versicolor": {
+        "precision": 0.9,
+        "recall": 0.9,
+        "f1-score": 0.9,
+        "support": 10.0
+      },
+      "virginica": {
+        "precision": 0.9,
+        "recall": 0.9,
+        "f1-score": 0.9,
+        "support": 10.0
+      },
+      "accuracy": 0.9333333333333333,
+      "macro avg": {
+        "precision": 0.9333333333333332,
+        "recall": 0.9333333333333332,
+        "f1-score": 0.9333333333333332,
+        "support": 30.0
+      },
+      "weighted avg": {
+        "precision": 0.9333333333333333,
+        "recall": 0.9333333333333333,
+        "f1-score": 0.9333333333333333,
+        "support": 30.0
+      }
+    },
+    "report_text": "              precision    recall  f1-score   support\n\n      setosa       1.00      1.00      1.00        10\n  versicolor       0.90      0.90      0.90        10\n   virginica       0.90      0.90      0.90        10\n\n    accuracy                           0.93        30\n   macro avg       0.93      0.93      0.93        30\nweighted avg       0.93      0.93      0.93        30\n",
+    "roc_auc_ovr": 0.9733333333333333
+  }
+}
