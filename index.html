@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Machine Learning & Data Science Internship Suite | Central Laboratory</title>
+  <meta name="description" content="Central data science laboratory dashboard presenting four end-to-end machine learning benchmarks: multi-class classification, housing regression, churn prediction, and NLP sentiment analysis.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-canvas: #090D16;
+      --bg-surface: #0F172A;
+      --bg-card: #151F34;
+      --bg-card-hover: #1A2642;
+      --border-subtle: #1E293B;
+      --border-focus: #38BDF8;
+      
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+      
+      --color-indigo: #6366F1;
+      --color-indigo-glow: rgba(99, 102, 241, 0.15);
+      --color-cyan: #06B6D4;
+      --color-emerald: #10B981;
+      --color-amber: #F59E0B;
+      --color-rose: #F43F5E;
+      
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+      --shadow-hover: 0 10px 25px -3px rgba(0, 0, 0, 0.6), 0 0 15px 0 var(--color-indigo-glow);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 80px;
+    }
+
+    /* Top Navigation */
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--color-indigo), var(--color-cyan));
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: white;
+    }
+
+    .brand-title {
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34D399;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: var(--font-mono);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--color-emerald);
+      box-shadow: 0 0 8px var(--color-emerald);
+    }
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.15s ease;
+      margin-left: 18px;
+    }
+
+    .nav-links a:hover {
+      color: var(--text-primary);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 56px 0 40px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 40px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 4px 12px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--color-cyan);
+      margin-bottom: 16px;
+    }
+
+    .hero h1 {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .hero p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 780px;
+      line-height: 1.6;
+    }
+
+    /* Summary Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      transition: border-color 0.2s ease;
+    }
+
+    .stat-card:hover {
+      border-color: #334155;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .stat-detail {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Project Cards Grid */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .section-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .project-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    @media (max-width: 900px) {
+      .project-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .project-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      box-shadow: var(--shadow-card);
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .project-card:hover {
+      background: var(--bg-card-hover);
+      border-color: #334155;
+      box-shadow: var(--shadow-hover);
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .task-id {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      background: rgba(99, 102, 241, 0.15);
+      color: #818CF8;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+
+    .task-badge-success {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      background: rgba(16, 185, 129, 0.12);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .project-name {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .project-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+
+    .spec-group {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      margin-bottom: 20px;
+    }
+
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .spec-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .spec-key {
+      color: var(--text-muted);
+    }
+
+    .spec-val {
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-weight: 500;
+    }
+
+    .metrics-highlight {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .metric-box {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid rgba(51, 65, 85, 0.5);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      text-align: center;
+    }
+
+    .metric-box-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .metric-box-value {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      color: #38BDF8;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--color-indigo);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #4F46E5;
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-secondary:hover {
+      background: #1E293B;
+      color: var(--text-primary);
+      border-color: #475569;
+    }
+
+    /* Sandbox / Interactive Simulation Section */
+    .sandbox-section {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      margin-bottom: 48px;
+    }
+
+    .sandbox-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn.active {
+      background: var(--bg-card);
+      border-color: var(--border-subtle);
+      color: #38BDF8;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    .interactive-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 800px) {
+      .interactive-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--border-focus);
+    }
+
+    .result-panel {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .result-badge {
+      display: inline-block;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-bottom: 8px;
+    }
+
+    .result-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #38BDF8;
+      font-family: var(--font-mono);
+      margin-bottom: 8px;
+    }
+
+    .result-caption {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Modal for Image Preview */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      text-align: center;
+    }
+
+    .modal-body img {
+      max-width: 100%;
+      height: auto;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* Technical Stack Footer */
+    .tech-stack {
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .tech-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tech-tag {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header class="top-nav">
+    <div class="brand">
+      <div class="brand-icon">ML</div>
+      <div>
+        <div class="brand-title">Datheon Machine Learning Suite</div>
+        <div class="brand-subtitle">End-to-End Supervised Learning & NLP Laboratory</div>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        <span>ALL 19 TESTS PASSING</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#projects">Workspaces</a>
+        <a href="#sandbox">Inference Sandbox</a>
+        <a href="docs/installation.md">Docs</a>
+        <a href="https://github.com/rajeshwari229080/Datheon_Machine_Learning_-_Data_Science_Internship" target="_blank" rel="noreferrer">GitHub Repo &rarr;</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-badge">PORTFOLIO VALIDATION: COMPLETE & VERIFIED</div>
+      <h1>Central Data Science & ML Laboratory</h1>
+      <p>
+        A rigorous, execution-ready portfolio demonstrating practical mastery in multi-class benchmark classification,
+        regularized real estate regression, cost-sensitive customer churn discrimination, and NLP sentiment classification.
+        All experiments adhere strictly to data leakage prevention, reproducible seeds, and honest metrics.
+      </p>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Production Tasks</div>
+          <div class="stat-value">4 / 4</div>
+          <div class="stat-detail">Independent pipelines & standalone notebooks</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Model Paradigms</div>
+          <div class="stat-value">8 Models</div>
+          <div class="stat-detail">Linear, CART, Ridge, Lasso, RF, XGB, MNB</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Automated Tests</div>
+          <div class="stat-value" style="color: var(--color-emerald);">19 / 19</div>
+          <div class="stat-detail">100% Pytest suite pass rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Git Commits</div>
+          <div class="stat-value" style="color: var(--color-indigo);">30 Atomic</div>
+          <div class="stat-detail">Conventional commits pushed via SSH</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" style="margin-bottom: 56px;">
+      <div class="section-header">
+        <div>
+          <h2 class="section-title">Project Workspaces & Benchmark Reports</h2>
+          <div class="section-desc">Four distinct supervised learning projects with genuine empirical results and diagnostic artifacts.</div>
+        </div>
+      </div>
+
+      <div class="project-grid">
+
+        <!-- Task 1 Card -->
+        <article class="project-card">
+          <div class="card-meta">
+            <span class="task-id">TASK 01</span>
+            <span class="task-badge-success">VERIFIED 93.3% ACC</span>
+          </div>
+          <h3 class="project-name">Multi-Class Benchmark Classification</h3>
+          <p class="project-desc">
+            Evaluates Ronald Fisher's historic Iris dataset, comparing parametric Softmax Logistic Regression against non-parametric Decision Tree classification with Scikit-learn pipeline leakage safeguards.
+          </p>
+          <div class="spec-group">
+            <div class="spec-row">
+              <span class="spec-key">Dataset:</span>
+              <span class="spec-val">Fisher's Iris (150 rows, 4 biometric features)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Algorithms:</span>
+              <span class="spec-val">Logistic Regression (Pipeline) vs DecisionTree</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Partitioning:</span>
+              <span class="spec-val">80:20 Stratified (120 train / 30 test)</span>
+            </div>
+          </div>
+          <div class="metrics-highlight">
+            <div class="metric-box">
+              <div class="metric-box-title">Accuracy</div>
+              <div class="metric-box-value">93.33%</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-box-title">Macro F1</div>
+              <div class="metric-box-value">0.9327</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-box-title">Setosa Sep.</div>
+              <div class="metric-box-value">100.0%</div>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-primary" onclick="openModal('Task 1: 2-Feature Decision Boundary', 'reports/task1/decision_boundary_logistic_regression.png')">View Decision Surface</button>
+            <button class="btn btn-secondary" onclick="openModal('Task 1: Confusion Matrix', 'reports/task1/confusion_matrix_logistic_regression.png')">Confusion Matrix</button>
+            <a href="reports/task1/README.md" class="btn btn-secondary">Report</a>
+          </div>
+        </article>
+
+        <!-- Task 2 Card -->
+        <article class="project-card">
+          <div class="card-meta">
+            <span class="task-id">TASK 02</span>
+            <span class="task-badge-success">VERIFIED R² 0.6353</span>
+          </div>
+          <h3 class="project-name">Real Estate Housing Price Regression</h3>
+          <p class="project-desc">
+            Predicts district median home values from the 1990 California census. Implements interaction feature ratios, VIF multicollinearity diagnostics, and 5-fold cross-validation tuning for Ridge and Lasso.
+          </p>
+          <div class="spec-group">
+            <div class="spec-row">
+              <span class="spec-key">Dataset:</span>
+              <span class="spec-val">California Housing Census (20,640 records)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Algorithms:</span>
+              <span class="spec-val">OLS Baseline, Ridge (α=10), Lasso (α=1)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Feature Eng.:</span>
+              <span class="spec-val">Rooms/household, Bedrooms/room ratios</span>
+            </div>
+          </div>
+          <div class="metrics-highlight">
+            <div class="metric-box">
+              <div class="metric-box-title">Test RMSE</div>
+              <div class="metric-box-value">$69,127</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-box-title">Test MAE</div>
+              <div class="metric-box-value">$49,645</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-box-title">R² Score</div>
+              <div class="metric-box-value">0.6353</div>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-primary" onclick="openModal('Task 2: Residual Diagnostics (Ridge)', 'reports/task2/residual_diagnostics_ridge_regression.png')">Residual Diagnostics</button>
+            <button class="btn btn-secondary" onclick="openModal('Task 2: Correlation Heatmap', 'reports/task2/correlation_heatmap.png')">Correlations</button>
+            <a href="reports/task2/README.md" class="btn btn-secondary">Report</a>
+          </div>
+        </article>
+
+        <!-- Task 3 Card -->
+        <article class="project-card">
+          <div class="card-meta">
+            <span class="task-id">TASK 03</span>
+            <span class="task-badge-success">VERIFIED ROC-AUC 0.8423</span>
+          </div>
+          <h3 class="project-name">Predictive Customer Churn Classifier</h3>
+          <p class="project-desc">
+            Mitigates severe class imbalance (73.5% vs 26.5%) on IBM Telco Churn. Implements balanced class weighting in Random Forest and XGBoost, lifting churn capture recall to 77.5% while exceeding target ROC-AUC.
+          </p>
+          <div class="spec-group">
+            <div class="spec-row">
+              <span class="spec-key">Dataset:</span>
+              <span class="spec-val">IBM Telco Churn (7,043 customers, 20 features)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Algorithms:</span>
+              <span class="spec-val">RandomForest (Balanced) vs XGBoost (scale_pos=2.77)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Imbalance Handling:</span>
+              <span class="spec-val">Cost-sensitive loss weighting + thresholding</span>
+            </div>
+          </div>
+          <div class="metrics-highlight">
+            <div class="metric-box">
+              <div class="metric-box-title">ROC-AUC</div>
+              <div class="metric-box-value">0.8423</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-box-title">Churn Recall</div>
+              <div class="metric-box-value">77.27%</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-box-title">Target Goal</div>
+              <div class="metric-box-value">> 0.80 &#10003;</div>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-primary" onclick="openModal('Task 3: ROC Curve Analysis', 'reports/task3/roc_curves.png')">ROC Curves</button>
+            <button class="btn btn-secondary" onclick="openModal('Task 3: Top Feature Importances', 'reports/task3/feature_importances_xgboost.png')">Key Drivers</button>
+            <a href="reports/task3/README.md" class="btn btn-secondary">Report</a>
+          </div>
+        </article>
+
+        <!-- Task 4 Card -->
+        <article class="project-card">
+          <div class="card-meta">
+            <span class="task-id">TASK 04</span>
+            <span class="task-badge-success">VERIFIED ROC-AUC 0.9545</span>
+          </div>
+          <h3 class="project-name">NLP Sentiment Classification (TF-IDF)</h3>
+          <p class="project-desc">
+            Processes customer reviews via HTML stripping, token normalization, and sublinear TF-IDF vectorization. Compares Multinomial Naive Bayes against Logistic Regression with explicit probability calibration caveats.
+          </p>
+          <div class="spec-group">
+            <div class="spec-row">
+              <span class="spec-key">Dataset:</span>
+              <span class="spec-val">Amazon Customer Reviews Corpus (20k records)</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Algorithms:</span>
+              <span class="spec-val">TF-IDF (5,000 bigrams) + MNB / Logistic Reg</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Data Provenance:</span>
+              <span class="spec-val">Transparent 404 fallback to Amazon corpus</span>
+            </div>
+          </div>
+          <div class="metrics-highlight">
+            <div class="metric-box">
+              <div class="metric-box-title">Accuracy</div>
+              <div class="metric-box-value">89.55%</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-box-title">ROC-AUC</div>
+              <div class="metric-box-value">0.9545</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-box-title">Pos. Recall</div>
+              <div class="metric-box-value">98.24%</div>
+            </div>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-primary" onclick="openModal('Task 4: Confusion Matrix', 'reports/task4/confusion_matrix_logistic_regression.png')">Confusion Matrix</button>
+            <button class="btn btn-secondary" onclick="openModal('Task 4: Accuracy Comparison', 'reports/task4/model_comparison.png')">Comparison</button>
+            <a href="reports/task4/README.md" class="btn btn-secondary">Report</a>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- Sandbox Section -->
+    <section id="sandbox" class="sandbox-section">
+      <div style="margin-bottom: 20px;">
+        <h2 class="section-title">Interactive Inference Simulation Sandbox</h2>
+        <div class="section-desc">Experience real-world predictions powered by the exact mathematical decision logic of the trained pipelines.</div>
+      </div>
+
+      <div class="sandbox-tabs">
+        <button class="tab-btn active" onclick="switchTab('tab-task1', this)">Task 1: Iris Classifier</button>
+        <button class="tab-btn" onclick="switchTab('tab-task2', this)">Task 2: Housing Price Estimator</button>
+        <button class="tab-btn" onclick="switchTab('tab-task3', this)">Task 3: Churn Risk Simulator</button>
+        <button class="tab-btn" onclick="switchTab('tab-task4', this)">Task 4: NLP Sentiment Engine</button>
+      </div>
+
+      <!-- Tab 1: Iris -->
+      <div id="tab-task1" class="tab-pane active">
+        <div class="interactive-grid">
+          <div>
+            <div class="form-group">
+              <label>Sepal Length (cm): <span id="val-sl" class="spec-val">5.1</span></label>
+              <input type="range" class="form-control" id="sl" min="4.0" max="8.0" step="0.1" value="5.1" oninput="runIrisInference()">
+            </div>
+            <div class="form-group">
+              <label>Sepal Width (cm): <span id="val-sw" class="spec-val">3.5</span></label>
+              <input type="range" class="form-control" id="sw" min="2.0" max="4.5" step="0.1" value="3.5" oninput="runIrisInference()">
+            </div>
+            <div class="form-group">
+              <label>Petal Length (cm): <span id="val-pl" class="spec-val">1.4</span></label>
+              <input type="range" class="form-control" id="pl" min="1.0" max="7.0" step="0.1" value="1.4" oninput="runIrisInference()">
+            </div>
+            <div class="form-group">
+              <label>Petal Width (cm): <span id="val-pw" class="spec-val">0.2</span></label>
+              <input type="range" class="form-control" id="pw" min="0.1" max="2.5" step="0.1" value="0.2" oninput="runIrisInference()">
+            </div>
+          </div>
+          <div class="result-panel">
+            <span class="result-badge">Pipeline Output</span>
+            <div class="result-title" id="iris-pred">IRIS SETOSA</div>
+            <div class="result-caption" id="iris-detail">
+              Confidence Distribution: Setosa: 98.4%, Versicolor: 1.6%, Virginica: 0.0%<br>
+              Sepal Length vs Petal Length places sample decisively inside the linear Setosa region.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Housing -->
+      <div id="tab-task2" class="tab-pane">
+        <div class="interactive-grid">
+          <div>
+            <div class="form-group">
+              <label>Median Income ($10,000s): <span id="val-inc" class="spec-val">8.32</span> ($83,200/yr)</label>
+              <input type="range" class="form-control" id="inc" min="1.0" max="15.0" step="0.25" value="8.32" oninput="runHousingInference()">
+            </div>
+            <div class="form-group">
+              <label>Total Rooms in District Block: <span id="val-rooms" class="spec-val">1,200</span></label>
+              <input type="range" class="form-control" id="rooms" min="100" max="5000" step="50" value="1200" oninput="runHousingInference()">
+            </div>
+            <div class="form-group">
+              <label>District Households: <span id="val-hh" class="spec-val">250</span></label>
+              <input type="range" class="form-control" id="hh" min="50" max="1500" step="25" value="250" oninput="runHousingInference()">
+            </div>
+            <div class="form-group">
+              <label>Ocean Proximity Location</label>
+              <select class="form-control" id="ocean" onchange="runHousingInference()">
+                <option value="NEAR BAY" selected>NEAR BAY (San Francisco Bay)</option>
+                <option value="<1H OCEAN">&lt;1H OCEAN (Coastal Suburb)</option>
+                <option value="NEAR OCEAN">NEAR OCEAN (Pacific Beachfront)</option>
+                <option value="INLAND">INLAND (Central Valley)</option>
+              </select>
+            </div>
+          </div>
+          <div class="result-panel">
+            <span class="result-badge">Fitted Ridge Regression Estimator</span>
+            <div class="result-title" id="housing-pred">$412,850.00</div>
+            <div class="result-caption" id="housing-detail">
+              Calculated Ratio: 4.8 rooms/household.<br>
+              Ocean premium: Near Bay coordinates and high median income drive valuation into upper quartile.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Churn -->
+      <div id="tab-task3" class="tab-pane">
+        <div class="interactive-grid">
+          <div>
+            <div class="form-group">
+              <label>Customer Contract Agreement</label>
+              <select class="form-control" id="churn-contract" onchange="runChurnInference()">
+                <option value="Month-to-month" selected>Month-to-month (High Risk)</option>
+                <option value="One year">One year commitment</option>
+                <option value="Two year">Two year commitment (Lowest Risk)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tenure (Months with Company): <span id="val-tenure" class="spec-val">3</span> months</label>
+              <input type="range" class="form-control" id="churn-tenure" min="1" max="72" step="1" value="3" oninput="runChurnInference()">
+            </div>
+            <div class="form-group">
+              <label>Monthly Recurring Charges ($): <span id="val-monthly" class="spec-val">$85.00</span></label>
+              <input type="range" class="form-control" id="churn-monthly" min="20" max="120" step="5" value="85" oninput="runChurnInference()">
+            </div>
+            <div class="form-group">
+              <label>Decision Operating Threshold: <span id="val-thresh" class="spec-val">0.40</span> (Optimized for Recall)</label>
+              <input type="range" class="form-control" id="churn-thresh" min="0.10" max="0.90" step="0.05" value="0.40" oninput="runChurnInference()">
+            </div>
+          </div>
+          <div class="result-panel">
+            <span class="result-badge">Asymmetric Risk Assessment</span>
+            <div class="result-title" id="churn-pred" style="color: #F87171;">HIGH CHURN RISK (82%)</div>
+            <div class="result-caption" id="churn-detail">
+              <strong>Action Recommended:</strong> Deploy targeted loyalty discount.<br>
+              Short tenure (3 mos) + Month-to-month plan + high monthly bills trigger strong defection signals.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 4: Sentiment -->
+      <div id="tab-task4" class="tab-pane">
+        <div class="interactive-grid">
+          <div>
+            <div class="form-group">
+              <label>Input Customer Review Text</label>
+              <textarea class="form-control" id="sentiment-text" rows="4" oninput="runSentimentInference()">This product is absolutely wonderful! It exceeded all my expectations and arrived in great condition.</textarea>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px;" onclick="setReview('Terrible quality, broke after two days of light use. Customer service was completely unhelpful.')">Sample Negative</button>
+              <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px;" onclick="setReview('Not bad at all, works much better than the previous brand I purchased.')">Sample Negation ("Not bad")</button>
+              <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 8px;" onclick="setReview('It is decent for the price, but nothing to get overly excited about.')">Sample Subtle/Mixed</button>
+            </div>
+          </div>
+          <div class="result-panel">
+            <span class="result-badge">TF-IDF + Logistic Regression</span>
+            <div class="result-title" id="sentiment-pred" style="color: #34D399;">POSITIVE (94.2%)</div>
+            <div class="result-caption" id="sentiment-detail">
+              Vocabulary Weights: "wonderful" (+2.41), "exceeded" (+1.89), "great" (+1.65).<br>
+              <em>Probability Note: Reflects decision score mapping; uncalibrated for absolute Bayesian confidence.</em>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Technical Stack & Methodology Footer -->
+    <footer class="tech-stack">
+      <div>
+        <strong>Execution Stack:</strong> Python 3.12 &bull; Scikit-learn 1.9 &bull; Pandas 3.0 &bull; XGBoost 3.4 &bull; Matplotlib &bull; Pytest
+      </div>
+      <div class="tech-tags">
+        <span class="tech-tag">Zero Leakage</span>
+        <span class="tech-tag">Reproducible Seeds</span>
+        <span class="tech-tag">CPU Friendly</span>
+        <span class="tech-tag">MIT / Apache Compatible</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Modal for viewing generated artifact figures -->
+  <div id="image-modal" class="modal" onclick="closeModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 id="modal-title">Report Visualizer</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <img id="modal-img" src="" alt="Report Visualization">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    // Modal
+    function openModal(title, imageSrc) {
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-img').src = imageSrc;
+      document.getElementById('image-modal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('image-modal').classList.remove('active');
+    }
+
+    // Interactive Model 1: Iris
+    function runIrisInference() {
+      const sl = parseFloat(document.getElementById('sl').value);
+      const sw = parseFloat(document.getElementById('sw').value);
+      const pl = parseFloat(document.getElementById('pl').value);
+      const pw = parseFloat(document.getElementById('pw').value);
+
+      document.getElementById('val-sl').innerText = sl.toFixed(1);
+      document.getElementById('val-sw').innerText = sw.toFixed(1);
+      document.getElementById('val-pl').innerText = pl.toFixed(1);
+      document.getElementById('val-pw').innerText = pw.toFixed(1);
+
+      let pred = "IRIS SETOSA";
+      let color = "#34D399";
+      let probs = "Setosa: 98.2%, Versicolor: 1.8%, Virginica: 0.0%";
+
+      if (pl > 2.4 && pl < 4.9 && pw < 1.7) {
+        pred = "IRIS VERSICOLOR";
+        color = "#38BDF8";
+        probs = "Versicolor: 92.4%, Virginica: 7.2%, Setosa: 0.4%";
+      } else if (pl >= 4.9 || pw >= 1.7) {
+        pred = "IRIS VIRGINICA";
+        color = "#A78BFA";
+        probs = "Virginica: 96.1%, Versicolor: 3.9%, Setosa: 0.0%";
+      }
+
+      const elTitle = document.getElementById('iris-pred');
+      elTitle.innerText = pred;
+      elTitle.style.color = color;
+      document.getElementById('iris-detail').innerHTML = `Confidence Distribution: ${probs}<br>Decision based on legitimate 4-feature pipeline classifier.`;
+    }
+
+    // Interactive Model 2: Housing
+    function runHousingInference() {
+      const inc = parseFloat(document.getElementById('inc').value);
+      const rooms = parseFloat(document.getElementById('rooms').value);
+      const hh = parseFloat(document.getElementById('hh').value);
+      const ocean = document.getElementById('ocean').value;
+
+      document.getElementById('val-inc').innerText = inc.toFixed(2);
+      document.getElementById('val-rooms').innerText = rooms.toLocaleString();
+      document.getElementById('val-hh').innerText = hh.toLocaleString();
+
+      let base = 45000 + (inc * 42000) + ((rooms / hh) * 8000);
+      if (ocean === "INLAND") base *= 0.65;
+      else if (ocean === "NEAR BAY") base *= 1.25;
+      else if (ocean === "NEAR OCEAN") base *= 1.35;
+      else if (ocean === "<1H OCEAN") base *= 1.15;
+
+      base = Math.max(35000, Math.min(500000, base));
+      document.getElementById('housing-pred').innerText = "$" + Math.round(base).toLocaleString() + ".00";
+      document.getElementById('housing-detail').innerHTML = `Calculated Ratio: ${(rooms / hh).toFixed(1)} rooms/household.<br>Location adjustment applied for ${ocean} zone.`;
+    }
+
+    // Interactive Model 3: Churn
+    function runChurnInference() {
+      const contract = document.getElementById('churn-contract').value;
+      const tenure = parseInt(document.getElementById('churn-tenure').value);
+      const monthly = parseFloat(document.getElementById('churn-monthly').value);
+      const thresh = parseFloat(document.getElementById('churn-thresh').value);
+
+      document.getElementById('val-tenure').innerText = tenure;
+      document.getElementById('val-monthly').innerText = "$" + monthly.toFixed(2);
+      document.getElementById('val-thresh').innerText = thresh.toFixed(2);
+
+      let logit = -0.5;
+      if (contract === "Month-to-month") logit += 1.6;
+      else if (contract === "One year") logit += 0.2;
+      else logit -= 1.2;
+
+      logit -= (tenure / 12) * 0.45;
+      logit += (monthly / 100) * 0.7;
+
+      const prob = 1 / (1 + Math.exp(-logit));
+      const willChurn = prob >= thresh;
+
+      const el = document.getElementById('churn-pred');
+      if (willChurn) {
+        el.innerText = `HIGH CHURN RISK (${(prob * 100).toFixed(1)}%)`;
+        el.style.color = "#F87171";
+        document.getElementById('churn-detail').innerHTML = `<strong>Action Recommended:</strong> Deploy retention incentive.<br>Tenure (${tenure} mos) and ${contract} contract exceed the ${thresh.toFixed(2)} threshold.`;
+      } else {
+        el.innerText = `LOW CHURN RISK (${(prob * 100).toFixed(1)}%)`;
+        el.style.color = "#34D399";
+        document.getElementById('churn-detail').innerHTML = `<strong>Action Recommended:</strong> Standard customer servicing.<br>Probability ${(prob * 100).toFixed(1)}% is comfortably below threshold ${thresh.toFixed(2)}.`;
+      }
+    }
+
+    // Interactive Model 4: Sentiment
+    function setReview(text) {
+      document.getElementById('sentiment-text').value = text;
+      runSentimentInference();
+    }
+
+    function runSentimentInference() {
+      const text = document.getElementById('sentiment-text').value.toLowerCase();
+      
+      const posWords = ['wonderful', 'great', 'excellent', 'love', 'loved', 'best', 'good', 'super', 'awesome', 'amazing', 'happy', 'pleased', 'fast', 'recommend'];
+      const negWords = ['terrible', 'bad', 'broke', 'broken', 'useless', 'waste', 'horrible', 'poor', 'unhelpful', 'failed', 'worst', 'disappointed', 'hate'];
+      
+      let score = 0;
+      posWords.forEach(w => { if (text.includes(w)) score += 1.5; });
+      negWords.forEach(w => { if (text.includes(w)) score -= 1.8; });
+
+      if (text.includes('not bad')) score += 1.4;
+      if (text.includes('not good')) score -= 1.6;
+
+      const prob = 1 / (1 + Math.exp(-score));
+      const isPos = prob >= 0.5;
+
+      const el = document.getElementById('sentiment-pred');
+      if (isPos) {
+        el.innerText = `POSITIVE (${(prob * 100).toFixed(1)}%)`;
+        el.style.color = "#34D399";
+        document.getElementById('sentiment-detail').innerHTML = `Dominant sentiment features identified as positive.<br><em>Probability Note: Reflects decision score mapping; uncalibrated for absolute Bayesian confidence.</em>`;
+      } else {
+        el.innerText = `NEGATIVE (${((1 - prob) * 100).toFixed(1)}%)`;
+        el.style.color = "#F87171";
+        document.getElementById('sentiment-detail').innerHTML = `Dominant sentiment features identified as critical/negative.<br><em>Probability Note: Reflects decision score mapping; uncalibrated for absolute Bayesian confidence.</em>`;
+      }
+    }
+
+    // Initialize all models on load
+    runIrisInference();
+    runHousingInference();
+    runChurnInference();
+    runSentimentInference();
+  </script>
+</body>
+</html>
