@@ -1,0 +1,57 @@
+[
+  {
+    "input_text": "This product is absolutely wonderful! It exceeded all my expectations and arrived quickly.",
+    "logistic_regression": {
+      "sentiment": "Positive",
+      "probability_positive": 0.8958
+    },
+    "naive_bayes": {
+      "sentiment": "Positive",
+      "probability_positive": 0.9034
+    }
+  },
+  {
+    "input_text": "Terrible quality, broke after two days of light use. Customer service was unhelpful.",
+    "logistic_regression": {
+      "sentiment": "Positive",
+      "probability_positive": 0.5776
+    },
+    "naive_bayes": {
+      "sentiment": "Positive",
+      "probability_positive": 0.6819
+    }
+  },
+  {
+    "input_text": "It is decent for the price, but nothing to get overly excited about.",
+    "logistic_regression": {
+      "sentiment": "Positive",
+      "probability_positive": 0.7274
+    },
+    "naive_bayes": {
+      "sentiment": "Positive",
+      "probability_positive": 0.7204
+    }
+  },
+  {
+    "input_text": "Not bad at all, works much better than the previous brand I purchased.",
+    "logistic_regression": {
+      "sentiment": "Positive",
+      "probability_positive": 0.5205
+    },
+    "naive_bayes": {
+      "sentiment": "Positive",
+      "probability_positive": 0.7853
+    }
+  },
+  {
+    "input_text": "I wanted to love this, but it completely failed to perform as advertised. Waste of money.",
+    "logistic_regression": {
+      "sentiment": "Negative",
+      "probability_positive": 0.4629
+    },
+    "naive_bayes": {
+      "sentiment": "Negative",
+      "probability_positive": 0.3404
+    }
+  }
+]
