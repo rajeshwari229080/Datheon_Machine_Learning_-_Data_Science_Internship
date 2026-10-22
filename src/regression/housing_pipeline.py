@@ -10,8 +10,10 @@ import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import Lasso, LinearRegression, Ridge
@@ -21,6 +23,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.common.data_loader import load_dataset
 from src.common.evaluation import evaluate_regression, save_metrics_json
+from src.common.visualization import plot_model_comparison, plot_regression_diagnostics
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +118,60 @@ def build_regression_pipeline(estimator: Any) -> Pipeline:
     )
 
 
+def compute_vif_dataframe(df: pd.DataFrame, feature_cols: List[str]) -> pd.DataFrame:
+    """Compute Variance Inflation Factors (VIF) on numeric features to diagnose collinearity.
+
+    Note: In real estate modeling, coordinates (lat/long) and demographic scales (rooms/households)
+    naturally show high linear correlation, representing geographic and scale clustering rather
+    than corrupting redundancy.
+    """
+    from scipy import linalg
+
+    df_clean = df[feature_cols].dropna()
+    # Standardize to avoid scale distortions
+    X_mat = (df_clean - df_clean.mean()) / df_clean.std()
+    corr_mat = X_mat.corr().to_numpy()
+
+    vifs = []
+    try:
+        inv_corr = linalg.inv(corr_mat)
+        for i, col in enumerate(feature_cols):
+            vifs.append({"feature": col, "vif": float(inv_corr[i, i])})
+    except Exception as e:
+        logger.warning(f"VIF computation failed via matrix inversion: {e}")
+        for col in feature_cols:
+            vifs.append({"feature": col, "vif": float("nan")})
+
+    vif_df = pd.DataFrame(vifs).sort_values(by="vif", ascending=False).reset_index(drop=True)
+    return vif_df
+
+
+def plot_correlation_heatmap(df: pd.DataFrame, save_path: Optional[str] = None) -> plt.Figure:
+    """Generate professional correlation heatmap across numeric attributes."""
+    cols = ALL_NUMERIC_COLS + [TARGET_COL]
+    corr = df[cols].corr()
+
+    fig, ax = plt.subplots(figsize=(10, 8))
+    sns.heatmap(
+        corr,
+        annot=True,
+        fmt=".2f",
+        cmap="coolwarm",
+        center=0,
+        square=True,
+        linewidths=0.5,
+        cbar_kws={"shrink": 0.8},
+        ax=ax,
+    )
+    ax.set_title("California Housing: Feature Correlation Matrix", pad=14, weight="bold")
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        fig.savefig(save_path)
+    return fig
+
+
 def train_and_tune_models(
     X_train: pd.DataFrame,
     y_train: pd.Series,
@@ -175,7 +232,6 @@ def train_and_tune_models(
 
         metrics = evaluate_regression(y_test_arr, y_pred)
 
-        # Attach best CV parameters if tuned
         if name == "ridge_regression":
             metrics["best_alpha"] = float(ridge_cv.best_params_["regressor__alpha"])
             metrics["best_cv_rmse"] = float(-ridge_cv.best_score_)
@@ -204,4 +260,87 @@ def predict_house_value(pipeline: Pipeline, house_data: Dict[str, Any]) -> Dict[
         "predicted_median_house_value_usd": round(pred_val, 2),
         "predicted_value_formatted": f"${pred_val:,.2f}",
         "input_features": house_data,
+    }
+
+
+def run_task2_pipeline(output_dir: str = "reports/task2") -> Dict[str, Any]:
+    """Execute complete Task 2 pipeline, generate diagnostic charts, and save metrics."""
+    os.makedirs(output_dir, exist_ok=True)
+    X_train, X_test, y_train, y_test, df_full = prepare_housing_data()
+
+    # 1. Correlation heatmap
+    corr_path = os.path.join(output_dir, "correlation_heatmap.png")
+    plot_correlation_heatmap(df_full, save_path=corr_path)
+    plt.close("all")
+
+    # 2. VIF Analysis
+    vif_df = compute_vif_dataframe(df_full, RAW_NUMERIC_COLS)
+    vif_path = os.path.join(output_dir, "vif_analysis.json")
+    vif_df.to_json(vif_path, orient="records", indent=2)
+
+    # 3. Model training & Tuning
+    models, results, predictions = train_and_tune_models(X_train, y_train, X_test, y_test, cv=5)
+
+    # 4. Residual diagnostic plots for all 3 models
+    y_test_arr = y_test.to_numpy()
+    for name, y_pred in predictions.items():
+        diag_path = os.path.join(output_dir, f"residual_diagnostics_{name}.png")
+        plot_regression_diagnostics(
+            y_true=y_test_arr,
+            y_pred=y_pred,
+            model_name=name.replace("_", " ").title(),
+            save_path=diag_path,
+        )
+        plt.close("all")
+
+    # 5. Model comparison charts (RMSE and R2)
+    rmse_comp_path = os.path.join(output_dir, "model_comparison_rmse.png")
+    plot_model_comparison(
+        models_dict={
+            "OLS": results["ols_linear_regression"]["rmse"],
+            "Ridge": results["ridge_regression"]["rmse"],
+            "Lasso": results["lasso_regression"]["rmse"],
+        },
+        metric_name="RMSE ($ USD - Lower is better)",
+        title="Model Comparison: Test Set Root Mean Squared Error (RMSE)",
+        save_path=rmse_comp_path,
+    )
+    plt.close("all")
+
+    r2_comp_path = os.path.join(output_dir, "model_comparison_r2.png")
+    plot_model_comparison(
+        models_dict={
+            "OLS": results["ols_linear_regression"]["r2"],
+            "Ridge": results["ridge_regression"]["r2"],
+            "Lasso": results["lasso_regression"]["r2"],
+        },
+        metric_name="R² Score (Higher is better)",
+        title="Model Comparison: Test Set R² Score",
+        save_path=r2_comp_path,
+    )
+    plt.close("all")
+
+    # 6. Save metrics.json
+    save_metrics_json(results, os.path.join(output_dir, "metrics.json"))
+
+    # 7. Sample inference test
+    sample_house = {
+        "longitude": -122.23,
+        "latitude": 37.88,
+        "housing_median_age": 41.0,
+        "total_rooms": 880.0,
+        "total_bedrooms": 129.0,
+        "population": 322.0,
+        "households": 126.0,
+        "median_income": 8.3252,
+        "ocean_proximity": "NEAR BAY",
+    }
+    pred_res = predict_house_value(models["ridge_regression"], sample_house)
+    logger.info(f"Sample prediction for Berkeley house: {pred_res['predicted_value_formatted']}")
+
+    return {
+        "models": models,
+        "results": results,
+        "vif": vif_df,
+        "output_dir": output_dir,
     }
